@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/Movie-Analyzer.iml" filepath="$PROJECT_DIR$/.idea/modules/Movie-Analyzer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Movie-Analyzer-build.iml" filepath="$PROJECT_DIR$/.idea/modules/Movie-Analyzer-build.iml" />
     </modules>
   </component>
 </project>
