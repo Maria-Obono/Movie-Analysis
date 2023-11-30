@@ -25,12 +25,12 @@ class MovieratingDatasetTest extends AnyFunSuite {
     val ratingsData = readRatingsCSV(spark, ratingFilePath)
 
     val calculatedStats = ratingsData.agg(mean("rating").as("MeanRating"), stddev("rating").as("StdDevRating")).head()
-    val meanRating = calculatedStats.getAs[Double]("MeanRating")
-    val stdDevRating = calculatedStats.getAs[Double]("StdDevRating")
+    val meanRating = BigDecimal(calculatedStats.getAs[Double]("MeanRating")).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
+    val stdDevRating = BigDecimal(calculatedStats.getAs[Double]("StdDevRating")).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
 
     // Define expected values based on your test data
-    val meanRatingExpected = 3.5280903543608817
-    val stdDevRatingExpected = 1.0654427636662405
+    val meanRatingExpected = 3.528
+    val stdDevRatingExpected = 1.065
 
     assert(meanRating === meanRatingExpected)
     assert(stdDevRating === stdDevRatingExpected)

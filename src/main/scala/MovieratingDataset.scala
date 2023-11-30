@@ -14,8 +14,8 @@ object MovieratingDataset {
     val movieData = spark.read.option("header", "true").csv(filePath)
 
     // Calculate mean rating and standard deviation
-    val meanRating = movieData.select(mean("rating")).first().getDouble(0)
-    val stdDevRating = movieData.select(stddev("rating")).first().getDouble(0)
+    val meanRating = BigDecimal(movieData.select(mean("rating")).first().getDouble(0)).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
+    val stdDevRating = BigDecimal(movieData.select(stddev("rating")).first().getDouble(0)).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
 
     println(s"Mean Rating: $meanRating")
     println(s"Standard Deviation of Rating: $stdDevRating")
