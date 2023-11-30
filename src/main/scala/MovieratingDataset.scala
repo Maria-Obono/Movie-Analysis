@@ -10,7 +10,7 @@ object MovieratingDataset {
       .getOrCreate()
 
     // Read the CSV file into a DataFrame
-    val filePath = "/Users/mariagloriaraquelobono/Fall2023/Movie-Analyzer/src/main/resources/ratings.csv"
+    val filePath = "/Users/mariagloriaraquelobono/Fall2023/Movie-Analyzer/src/main/resources/ratings_small.csv"
     val movieData = spark.read.option("header", "true").csv(filePath)
 
     // Calculate mean rating and standard deviation

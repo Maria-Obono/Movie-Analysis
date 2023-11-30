@@ -20,7 +20,7 @@ class MovieratingDatasetTest extends AnyFunSuite {
 
     // Replace these paths with your actual file paths
 
-    val ratingFilePath = "/Users/mariagloriaraquelobono/Fall2023/Movie-Analyzer/src/main/resources/ratings.csv"
+    val ratingFilePath = "/Users/mariagloriaraquelobono/Fall2023/Movie-Analyzer/src/main/resources/ratings_small.csv"
 
     val ratingsData = readRatingsCSV(spark, ratingFilePath)
 
@@ -29,8 +29,8 @@ class MovieratingDatasetTest extends AnyFunSuite {
     val stdDevRating = BigDecimal(calculatedStats.getAs[Double]("StdDevRating")).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
 
     // Define expected values based on your test data
-    val meanRatingExpected = 3.528
-    val stdDevRatingExpected = 1.065
+    val meanRatingExpected = 3.544
+    val stdDevRatingExpected = 1.058
 
     assert(meanRating === meanRatingExpected)
     assert(stdDevRating === stdDevRatingExpected)
