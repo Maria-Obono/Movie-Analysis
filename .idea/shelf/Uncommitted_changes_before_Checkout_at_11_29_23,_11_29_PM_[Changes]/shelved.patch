@@ -1,0 +1,48 @@
+Index: src/test/scala/MovieratingDatasetTest.scala
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import org.apache.spark.sql.{SparkSession, DataFrame}\nimport org.apache.spark.sql.functions.{mean, stddev}\nimport org.scalatest.funsuite.AnyFunSuite\n\nclass MovieratingDatasetTest extends AnyFunSuite {\n\n  def readRatingsCSV(spark: SparkSession, filePath: String): DataFrame = {\n    // Read ratings.csv\n    spark.read.option(\"header\", \"true\").csv(filePath)\n  }\n\n\n  test(\"Test movie ratings analysis with merged data\") {\n    val spark = SparkSession.builder()\n      .appName(\"MovieratingDatasetTest\")\n      .master(\"local[*]\")\n      .getOrCreate()\n\n    import spark.implicits._\n\n    // Replace these paths with your actual file paths\n\n    val ratingFilePath = \"/Users/mariagloriaraquelobono/Fall2023/Movie-Analyzer/src/main/resources/ratings.csv\"\n\n    val ratingsData = readRatingsCSV(spark, ratingFilePath)\n\n    val calculatedStats = ratingsData.agg(mean(\"rating\").as(\"MeanRating\"), stddev(\"rating\").as(\"StdDevRating\")).head()\n    val meanRating = calculatedStats.getAs[Double](\"MeanRating\")\n    val stdDevRating = calculatedStats.getAs[Double](\"StdDevRating\")\n\n    // Define expected values based on your test data\n    val meanRatingExpected = 3.5280903543608817\n    val stdDevRatingExpected = 1.0654427636662405\n\n    assert(meanRating === meanRatingExpected)\n    assert(stdDevRating === stdDevRatingExpected)\n\n    spark.stop()\n  }\n\n  test(\"Test handling of empty ratings dataset\") {\n    val spark = SparkSession.builder()\n      .appName(\"MovieratingDatasetTest\")\n      .master(\"local[*]\")\n      .getOrCreate()\n\n    import spark.implicits._\n\n    // Create an empty DataFrame to simulate an empty ratings dataset\n    val emptyTestData = Seq.empty[(String, Double)].toDF(\"userId\", \"rating\")\n\n    val calculatedStats = emptyTestData.agg(mean(\"rating\").as(\"MeanRating\"), stddev(\"rating\").as(\"StdDevRating\")).head()\n    val meanRating = calculatedStats.getAs[Double](\"MeanRating\")\n    val stdDevRating = calculatedStats.getAs[Double](\"StdDevRating\")\n\n    // Define expected values for an empty dataset\n    val meanRatingExpected = 0.0 // Expected mean rating for an empty dataset\n    val stdDevRatingExpected = 0.0 // Expected standard deviation for an empty dataset\n\n    assert(meanRating === meanRatingExpected)\n    assert(stdDevRating === stdDevRatingExpected)\n\n    spark.stop()\n  }\n\n}\n\n\n\n
+===================================================================
+diff --git a/src/test/scala/MovieratingDatasetTest.scala b/src/test/scala/MovieratingDatasetTest.scala
+--- a/src/test/scala/MovieratingDatasetTest.scala	
++++ b/src/test/scala/MovieratingDatasetTest.scala	
+@@ -25,12 +25,12 @@
+     val ratingsData = readRatingsCSV(spark, ratingFilePath)
+ 
+     val calculatedStats = ratingsData.agg(mean("rating").as("MeanRating"), stddev("rating").as("StdDevRating")).head()
+-    val meanRating = calculatedStats.getAs[Double]("MeanRating")
+-    val stdDevRating = calculatedStats.getAs[Double]("StdDevRating")
++    val meanRating = BigDecimal(calculatedStats.getAs[Double]("MeanRating")).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
++    val stdDevRating = BigDecimal(calculatedStats.getAs[Double]("StdDevRating")).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
+ 
+     // Define expected values based on your test data
+-    val meanRatingExpected = 3.5280903543608817
+-    val stdDevRatingExpected = 1.0654427636662405
++    val meanRatingExpected = 3.528
++    val stdDevRatingExpected = 1.065
+ 
+     assert(meanRating === meanRatingExpected)
+     assert(stdDevRating === stdDevRatingExpected)
+Index: src/main/scala/MovieratingDataset.scala
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import org.apache.spark.sql.SparkSession\nimport org.apache.spark.sql.functions.{mean, stddev}\n\nobject MovieratingDataset {\n  def main(args: Array[String]): Unit = {\n    // Create a SparkSession\n    val spark = SparkSession.builder()\n      .appName(\"MovieratingDataset\")\n      .master(\"local[*]\") // Change this to your cluster setup\n      .getOrCreate()\n\n    // Read the CSV file into a DataFrame\n    val filePath = \"/Users/mariagloriaraquelobono/Fall2023/Movie-Analyzer/src/main/resources/ratings.csv\"\n    val movieData = spark.read.option(\"header\", \"true\").csv(filePath)\n\n    // Calculate mean rating and standard deviation\n    val meanRating = movieData.select(mean(\"rating\")).first().getDouble(0)\n    val stdDevRating = movieData.select(stddev(\"rating\")).first().getDouble(0)\n\n    println(s\"Mean Rating: $meanRating\")\n    println(s\"Standard Deviation of Rating: $stdDevRating\")\n\n    // Stop the SparkSession\n    spark.stop()\n  }\n\n}\n
+===================================================================
+diff --git a/src/main/scala/MovieratingDataset.scala b/src/main/scala/MovieratingDataset.scala
+--- a/src/main/scala/MovieratingDataset.scala	
++++ b/src/main/scala/MovieratingDataset.scala	
+@@ -14,8 +14,12 @@
+     val movieData = spark.read.option("header", "true").csv(filePath)
+ 
+     // Calculate mean rating and standard deviation
+-    val meanRating = movieData.select(mean("rating")).first().getDouble(0)
+-    val stdDevRating = movieData.select(stddev("rating")).first().getDouble(0)
++    val meanRating = BigDecimal(movieData.select(mean("rating")).first().getDouble(0)).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
++    val stdDevRating = BigDecimal(movieData.select(stddev("rating")).first().getDouble(0)).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
++
++    // Round meanRating and stdDevRating to three decimal places
++    val roundedMeanRating = BigDecimal(meanRating).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
++    val roundedStdDevRating = BigDecimal(stdDevRating).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
+ 
+     println(s"Mean Rating: $meanRating")
+     println(s"Standard Deviation of Rating: $stdDevRating")
